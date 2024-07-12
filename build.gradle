@@ -1,0 +1,82 @@
+plugins {
+    id "application"
+    id "java"
+    id "org.springframework.boot" version "${springBoot_version}"
+    id 'com.google.cloud.tools.jib' version '3.2.0'
+    id "org.jetbrains.kotlin.jvm" version "${kotlin_version}"
+    id "org.jetbrains.kotlin.plugin.spring" version "${kotlin_version}"
+}
+
+
+apply plugin: 'application'
+apply plugin: 'java'
+apply plugin: 'kotlin'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'kotlin-spring'
+
+bootJar {
+    archiveFileName = 'camel-threads-otel-diplicate-traces.jar'
+
+}
+
+jar {
+    enabled = false
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("org.springframework.boot:spring-boot-starter-log4j2")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("org.springframework.cloud:spring-cloud-starter-config:2.1.3.RELEASE")
+
+    implementation group: 'org.apache.camel', name: 'camel-spring-boot', version: camel_version
+    implementation group: 'org.apache.camel', name: 'camel-cxf', version: camel_version
+    implementation group: 'org.apache.cxf', name: 'cxf-spring-boot-starter-jaxws', version: '3.5.5'
+    implementation group: 'com.fasterxml.jackson.jaxrs', name: 'jackson-jaxrs-json-provider', version: '2.12.7'
+
+    implementation platform("io.opentelemetry:opentelemetry-bom:1.40.0")
+    implementation "io.opentelemetry:opentelemetry-api"
+    runtimeOnly "io.opentelemetry.javaagent:opentelemetry-javaagent:2.5.0"
+}
+
+configurations {
+    compile.exclude module: 'spring-boot-starter-logging'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = "org.example.CamelThreadsOtelDuplicateTraces.main"
+    applicationDefaultJvmArgs = ["-javaagent:/libs/opentelemetry-javaagent-2.5.0.jar"]
+}
+
+task copyLibs(type: Copy) {
+    from configurations.runtime
+    into 'libs'
+}
+
+build.dependsOn(copyLibs)
+
+
+
+
+
+sourceSets.main.java.srcDir new File(buildDir, 'generated/main')
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '1.8'
+}
+
