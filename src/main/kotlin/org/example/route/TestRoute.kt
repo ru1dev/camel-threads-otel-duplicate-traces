@@ -5,10 +5,11 @@ import io.opentelemetry.api.trace.Span
 import org.apache.camel.Processor
 import org.apache.camel.builder.RouteBuilder
 import org.springframework.stereotype.Component
+import java.util.concurrent.ExecutorService
 
 
 @Component
-class TestRoute : RouteBuilder() {
+class TestRoute(val wrappedExecutorService: ExecutorService) : RouteBuilder() {
     override fun configure() {
 
         from("cxfrs:bean:restService")
@@ -18,7 +19,8 @@ class TestRoute : RouteBuilder() {
 
         from("direct:mainRoute")
             .id("main.route")
-            .threads(2)
+            .threads()
+            .executorService(wrappedExecutorService)
             .to("direct:childRoute")
 
         from("direct:childRoute")
